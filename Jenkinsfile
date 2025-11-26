@@ -7,7 +7,7 @@ pipeline {
     }
 
     tools {
-        allure 'allure'
+        allure 'allure-manual'
     }
 
     stages {
