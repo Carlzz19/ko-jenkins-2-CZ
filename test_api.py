@@ -1,12 +1,21 @@
 import requests
 import allure
 
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdXl4bmRtcG1vb3l6bmhmd3hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2ODQ4MTQsImV4cCI6MjA2NTI2MDgxNH0.lVhUKhscl3nT6oeVbnXb0BbF0mI0lFR_KKlxYMX6Mnc"
+
 BASE_URL = "https://hluyxndmpmooyznhfwxc.supabase.co"
 PRODUCTS_ENDPOINT = "/rest/v1/products"
+AUTH_ENDPOINT = "/auth/v1/token?grant_type=password"
 
-AUTH = "Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6ImRIWis2SmtoMUxhMlpQMXgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2hsdXl4bmRtcG1vb3l6bmhmd3hjLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3NDlkMjZmYy1mZTA0LTQ5YTItYWZmNS0yYzFkMTlmNzllYjciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzYzODkxODIyLCJpYXQiOjE3NjM4ODgyMjIsImVtYWlsIjoidW5vLnRlc3RpbmczQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJ1bm8udGVzdGluZzNAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiNzQ5ZDI2ZmMtZmUwNC00OWEyLWFmZjUtMmMxZDE5Zjc5ZWI3In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NjM3MzUwODl9XSwic2Vzc2lvbl9pZCI6ImZiM2ZjYzk5LWVjMDktNGFlOC1iNTc5LWE1MmE3MjljMjVkYyIsImlzX2Fub255bW91cyI6ZmFsc2V9.1jBMlJu-_Ar8uyJI41xRkueuPaTNru-QTs8MHOZVHNQ"
+AUTH_PAYLOAD = {"email":"uno.testing3@gmail.com","password":"123456789","gotrue_meta_security":{}}
 
-API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdXl4bmRtcG1vb3l6bmhmd3hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2ODQ4MTQsImV4cCI6MjA2NTI2MDgxNH0.lVhUKhscl3nT6oeVbnXb0BbF0mI0lFR_KKlxYMX6Mnc"
+get_auth = requests.post(url=BASE_URL+AUTH_ENDPOINT, json=AUTH_PAYLOAD, headers={"Apikey": API_KEY}) 
+
+AUTH = f"Bearer {get_auth.json()["access_token"]}"
+
+
+# AUTH = "Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6ImRIWis2SmtoMUxhMlpQMXgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2hsdXl4bmRtcG1vb3l6bmhmd3hjLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3NDlkMjZmYy1mZTA0LTQ5YTItYWZmNS0yYzFkMTlmNzllYjciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzYzODkxODIyLCJpYXQiOjE3NjM4ODgyMjIsImVtYWlsIjoidW5vLnRlc3RpbmczQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJ1bm8udGVzdGluZzNAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiNzQ5ZDI2ZmMtZmUwNC00OWEyLWFmZjUtMmMxZDE5Zjc5ZWI3In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NjM3MzUwODl9XSwic2Vzc2lvbl9pZCI6ImZiM2ZjYzk5LWVjMDktNGFlOC1iNTc5LWE1MmE3MjljMjVkYyIsImlzX2Fub255bW91cyI6ZmFsc2V9.1jBMlJu-_Ar8uyJI41xRkueuPaTNru-QTs8MHOZVHNQ"
+
 
 HEADERS = {
     "Apikey": API_KEY,
@@ -31,7 +40,7 @@ def test_get_product_list():
         resp = requests.get(url, headers=HEADERS, params=PARAMS)
 
     with allure.step("Validasi status code 200"):
-        assert resp.status_code == 201, f"Expected 200 got {resp.status_code}"
+        assert resp.status_code == 200, f"Expected 200 got {resp.status_code}"
 
     with allure.step("Parse JSON response"):
         json_data = resp.json()
@@ -45,5 +54,3 @@ def test_get_product_list():
             assert "id" in sample, "Field `id` tidak ditemukan"
             assert "name" in sample, "Field `name` tidak ditemukan"
             assert "created_at" in sample, "Field `created_at` tidak ditemukan"
-
-
