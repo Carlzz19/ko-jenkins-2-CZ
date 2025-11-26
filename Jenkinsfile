@@ -32,7 +32,16 @@ pipeline {
     
     post {
         always {
-            allure includeProperties: false, jdk: '', results: [[path: 'allure-results']]
+            allure([
+                includeProperties: false,
+                jdk: '',
+                properties: [],
+                reportBuildPolicy: 'ALWAYS',
+                results: [[path: 'target/allure-results']],
+                // Tambahkan konfigurasi title di sini
+                reportName: 'Laporan Test Custom Saya',
+                title: 'Allure Report - Project Saya'
+            ])
         }
     }
 }
