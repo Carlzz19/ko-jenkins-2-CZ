@@ -32,7 +32,8 @@ pipeline {
     
     post {
         always {
-            allure includeProperties: false, jdk: '', results: [[path: 'allure-results']]
+            // allure includeProperties: false, jdk: '', results: [[path: 'allure-results']]
+            allure includeProperties: false, jdk: '', properties: [[key: 'allure.report.name', value: 'Judul Custom Laporan Saya'], [key: 'allure.report.title', value: 'Test Execution Report']], resultPolicy: 'LEAVE_AS_IS', results: [[path: 'allure-results']]
         }
     }
 }
