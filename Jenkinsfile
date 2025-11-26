@@ -6,20 +6,21 @@ pipeline {
     }
 
     stages {
-        stage('Checkout and Run Tests in Docker') {
+        stage('Run Tests in Docker') {
             steps {
                 script {
-                    docker.image('python:3.13.9-slim').inside("--network jenkins-network -v ${WORKSPACE}:/workspace") {
+                    docker.image('python:3.13.9-slim').inside("--network jenkins-network") {
                         stage('Install Dependencies') {
                             sh '''
-                                cd /workspace
+                                cd /var/jenkins_home/workspace/API_Test
+                                ls -la
                                 pip install -r requirements.txt
                             '''
                         }
                         
                         stage('Run Tests') {
                             sh '''
-                                cd /workspace
+                                cd /var/jenkins_home/workspace/API_Test
                                 pytest test_api.py -v --alluredir=allure-results
                             '''
                         }
@@ -31,7 +32,6 @@ pipeline {
     
     post {
         always {
-            // Allure dijalankan di Jenkins host, bukan dalam Docker container
             allure includeProperties: false, jdk: '', results: [[path: 'allure-results']]
         }
     }
