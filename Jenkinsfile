@@ -1,6 +1,9 @@
 pipeline {
     agent {
-        label 'python-agent'
+        docker {
+            image 'python:3.13.9-slim'
+            args '--network jenkins-network -v /var/jenkins_home/workspace/API_Test:/app'
+        }
     }
 
     tools {
@@ -11,7 +14,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    pip install -r requirements.txt
+                    pip install -r /app/requirements.txt
                 '''
             }
         }
@@ -19,7 +22,7 @@ pipeline {
         stage('Run Tests With Allure') {
             steps {
                 sh '''
-                    pytest test_api.py -v --alluredir=allure-results
+                    pytest /app/test_api.py -v --alluredir=/app/allure-results
                 '''
             }
         }
