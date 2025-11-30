@@ -1,56 +1,144 @@
 import requests
+from jsonschema import validate, ValidationError
+from faker import Faker
+import os
+from dotenv import load_dotenv
+import json
 import allure
 
-API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdXl4bmRtcG1vb3l6bmhmd3hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2ODQ4MTQsImV4cCI6MjA2NTI2MDgxNH0.lVhUKhscl3nT6oeVbnXb0BbF0mI0lFR_KKlxYMX6Mnc"
+load_dotenv()
 
-BASE_URL = "https://hluyxndmpmooyznhfwxc.supabase.co"
-PRODUCTS_ENDPOINT = "/rest/v1/products"
-AUTH_ENDPOINT = "/auth/v1/token?grant_type=password"
+BASE_URL = os.getenv("BASE_URL", "https://api-test.kelasotomesyen.com")
+API_KEY = os.getenv("API_KEY", "")
 
-AUTH_PAYLOAD = {"email":"uno.testing3@gmail.com","password":"123456789","gotrue_meta_security":{}}
-
-get_auth = requests.post(url=BASE_URL+AUTH_ENDPOINT, json=AUTH_PAYLOAD, headers={"Apikey": API_KEY}) 
-
-AUTH = f"Bearer {get_auth.json()["access_token"]}"
-
-
-# AUTH = "Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6ImRIWis2SmtoMUxhMlpQMXgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2hsdXl4bmRtcG1vb3l6bmhmd3hjLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3NDlkMjZmYy1mZTA0LTQ5YTItYWZmNS0yYzFkMTlmNzllYjciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzYzODkxODIyLCJpYXQiOjE3NjM4ODgyMjIsImVtYWlsIjoidW5vLnRlc3RpbmczQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJ1bm8udGVzdGluZzNAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiNzQ5ZDI2ZmMtZmUwNC00OWEyLWFmZjUtMmMxZDE5Zjc5ZWI3In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NjM3MzUwODl9XSwic2Vzc2lvbl9pZCI6ImZiM2ZjYzk5LWVjMDktNGFlOC1iNTc5LWE1MmE3MjljMjVkYyIsImlzX2Fub255bW91cyI6ZmFsc2V9.1jBMlJu-_Ar8uyJI41xRkueuPaTNru-QTs8MHOZVHNQ"
-
-
-HEADERS = {
-    "Apikey": API_KEY,
-    "Authorization": AUTH
+AUTH_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "access_token": {"type": "string"},
+        "token_type": {"type": "string"},
+        "expires_in": {"type": "number"},
+        "expires_at": {"type": "number"},
+        "refresh_token": {"type": "string"},
+        "user": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "email": {"type": "string"},
+                "created_at": {"type": "string"}
+            },
+            "required": ["id", "email"]
+        }
+    },
+    "required": ["access_token", "user"]
 }
 
-PARAMS = {
-    "select": "*",
-    "order": "created_at.desc"
+PRODUCT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "price": {"type": ["number", "string"]},
+        "stock": {"type": "number"},
+        "category": {"type": "string", "enum": ["Electronics", "Clothing", "Food", "Books", "Home", "Sports", "Toys", "Other"]},
+        "created_at": {"type": "string"},
+        "updated_at": {"type": "string"}
+    },
+    "required": ["id", "name", "price", "stock", "category"]
 }
 
-@allure.feature("Products API")
-@allure.story("Get Product List")
-@allure.title("Get Product List Hepi flow dah")
-@allure.description("Memastikan GET /products mengembalikan daftar produk dengan response 200 dan struktur JSON yang valid.")
+# Global variables
+fake = Faker()
+test_access_token = None
+test_product_id = None
+
+@allure.epic("API Testing, Kelas Otomesyen")
+@allure.feature("Autetikasi dan Manajemen Produk")
+@allure.story("Test API dengan Credentials yang valid")
+@allure.description("Test ini untuk memastikan bahhwa API dapat melakukan autentikasi pengguna dan membuat produk dengan benar.")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_get_product_list():
 
-    url = BASE_URL + PRODUCTS_ENDPOINT
+# ==================== TEST AUTH ====================
+def test_login_success():
+    global test_access_token
 
-    with allure.step(f"Kirim request GET ke {url} pake params {PARAMS}"):
-        resp = requests.get(url, headers=HEADERS, params=PARAMS)
+    with allure.step("1. Menyiapkan payload utnuk login"):
+        payload = {
+            "email": "uno.testing3@gmail.com",
+            "password": "1234567890"
+        }
 
-    with allure.step("Validasi status code 200"):
-        assert resp.status_code == 200, f"Expected 200 got {resp.status_code}"
+    with allure.step("2. Mengirim Post request ke endpoint authentication"):
+        response = requests.post(
+            f"{BASE_URL}/auth/v1/token?grant_type=password",
+            json=payload,
+            headers={"apikey": API_KEY}
+        )
 
-    with allure.step("Parse JSON response"):
-        json_data = resp.json()
+    with allure.step("3. Memvalidasi response dari server"):
+        assert response.status_code == 200, f"Maunya 200 tapi malah dikasi {response.status_code}"
+        allure.attach(str(response.status_code), name= "Status Code", attachment_type=allure.attachment_type.TEXT )
 
-    with allure.step("Validasi bahwa response adalah list data"):
-        assert isinstance(json_data, list), "Response harus berupa list"
+        data = response.json()
+        validate(instance=data, schema=AUTH_RESPONSE_SCHEMA)
+        allure.attach(response.text, name= "Response Body", attachment_type=allure.attachment_type.JSON)
 
-    if json_data:
-        with allure.step("Validasi structure field produk paling minim"):
-            sample = json_data[0]
-            assert "id" in sample, "Field `id` tidak ditemukan"
-            assert "name" in sample, "Field `name` tidak ditemukan"
-            assert "created_at" in sample, "Field `created_at` tidak ditemukan"
+        assert "access_token" in data
+        assert data["expires_in"] == 3600
+        allure.attach(str(data["expires_in"]), name= "Expires In", attachment_type=allure.attachment_type.TEXT)
+
+        test_access_token = data["access_token"]
+        allure.attach(data["access_token"], name= "Access Token", attachment_type=allure.attachment_type.TEXT)
+
+
+# ====================TEST PRODUC ====================
+
+def test_create_product_success():
+    global test_product_id
+
+    with allure.step("1. Menyiapkan data produk baru"):    
+        params = {
+        'columns': '"name","description","price","stock","category","user_id"',
+        'select': '*'
+        }
+
+        product_data = {
+            "name": fake.catch_phrase(),
+            "description": fake.text(max_nb_chars=200),
+            "price": round(fake.random_number(digits=5) / 100, 2),
+            "stock": fake.random_int(min=1, max=100),
+            "category": fake.random_element(elements=["Electronics", "Clothing", "Food", "Books", "Home", "Sports", "Toys", "Other"]),
+            "user_id": "6d6738c8-cd99-4fce-82eb-0dd7069843b9"
+        }
+
+        headers = {
+            "apikey": API_KEY,
+            "Authorization": f"Bearer {test_access_token}",
+            "Content-Type": "application/json",
+            "prefer": "return=representation"
+        }
+
+    with allure.step("2. Mengirim Post request ke endpoint produk untuk membuat produk baru"):
+        response = requests.post(
+            f"{BASE_URL}/rest/v1/products",
+            json=product_data,
+            headers=headers, params=params
+        )
+
+        assert response.status_code == 201, f"Maunya 201 tapi malah dikasi {response.status_code}"
+        allure.attach(str(response.status_code), name= "Status Code", attachment_type=allure.attachment_type.TEXT )
+
+        data = response.json()
+        print(data)
+        assert isinstance(data, list), "Responsenya mestinya list/array"
+        assert len(data) > 0, "Response list/array gak bole kosongan"
+
+    with allure.step("3. Memvalidasi data produk yang dibuat"):
+        product = data[0]
+        validate(instance=product, schema=PRODUCT_SCHEMA)
+
+        assert product["name"] == product_data["name"]
+        assert product["category"] == product_data["category"]
+
+        test_product_id = product["id"]
+        allure.attach(product["id"], name= "Product ID", attachment_type=allure.attachment_type.TEXT)
