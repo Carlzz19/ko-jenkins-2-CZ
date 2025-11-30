@@ -1,4 +1,6 @@
-pytest
 requests
+pytest
 jsonschema
 allure-pytest
+python-dotenv
+faker
