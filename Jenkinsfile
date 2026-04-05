@@ -9,7 +9,7 @@ pipeline {
         stage('Run Tests in Docker') {
             steps {
                 script {
-                    docker.image('python:3.13.9-slim').inside("--network jenkins-network") {
+                    docker.image('python:3.13.9-slim').inside("--network jenkins-net") {
                         stage('Install Dependencies') {
                             sh '''
                                 cd /var/jenkins_home/workspace/API_Test
